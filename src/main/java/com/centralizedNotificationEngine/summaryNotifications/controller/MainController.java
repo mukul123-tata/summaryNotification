@@ -124,7 +124,7 @@ public class MainController {
                 String s = gson.toJson(contacts[i]);
                 SerializationClass casen = gson.fromJson(s, SerializationClass.class);
                 casens.add(casen);
-                casens.get(i).setCc_email("MUKUL.SHARMA1@contractor.tatacommunications.com");
+                casens.get(i).setCc_email("MUKUL.SHARMA1@contractor.tatacommunications.com,suvarna.jagadale@tatacommunications.com");
                 casens.get(i).setTo_email("MUKUL.SHARMA1@contractor.tatacommunications.com");
             }
             Map<String, List<SerializationClass>> collect = casens.stream().collect(Collectors.groupingBy(SerializationClass::getAccountname));
