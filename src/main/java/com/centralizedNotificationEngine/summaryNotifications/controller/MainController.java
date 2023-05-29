@@ -39,6 +39,9 @@ public class MainController {
     @Value("${http.notifier.api.url}")
     private String baseUrl;
 
+    @Value("${http.notifier.summary.api.url}")
+    private String baseUrl1;
+
     HashMap<Object,Object> hashMap = new HashMap<>();
     HttpHeaders headers = new HttpHeaders();
     ArrayList<Notes> notesArrayList = new ArrayList<Notes>();
@@ -47,9 +50,6 @@ public class MainController {
     EventName eventName  = new EventName();
     TicketInfo ticketInfo = new TicketInfo();
     AdditionalInformation additionalInformation = new AdditionalInformation();
-    Map<String, ArrayList<String>> hashMap1 = new HashMap<String, ArrayList<String>>();
-
-
 
     @Schedules({
             @Scheduled(cron = "${cronjob.expression}"),
@@ -63,7 +63,7 @@ public class MainController {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.add("Authorization", "Basic " + base64Creds);
 
-            String sql = "select TOP 10 \"Ticket Number\" ticketNumber, \"Service ID\" serviceID, \"Account name\" accountName, bandwidth, category, state, \"Status Reason\" statusReason, to_email, cc_email, opened_at from Casen";
+            String sql = "select TOP 10 \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, category, state, \"Status Reason\" StatusReason, to_email, cc_email, opened_at from Casen";
             Object[] contacts = jdbcTemplate.queryForList(sql).stream().toArray();
 
             contact.setWatchList("str@gmail.com");
@@ -113,34 +113,45 @@ public class MainController {
 
     @GetMapping("sendData/casen")
     public ResponseEntity<?> send() throws JSONException {
-        int count=0;
-        Gson gson = new Gson();
-        String sql = "select \"Ticket Number\" ticketNumber, \"Service ID\" serviceID, \"Account name\" accountName, bandwidth, category, state, \"Status Reason\" statusReason, to_email, cc_email, opened_at from Casen";
-        Object[] contacts = jdbcTemplate.queryForList(sql).toArray();
-        List<SerializationClass> casens  = new ArrayList<>();
-        for(int i=0;i<contacts.length;i++){
-            String s = gson.toJson(contacts[i]);
-            SerializationClass casen = gson.fromJson(s, SerializationClass.class);
-            casens.add(casen);
+        try {
+            String response = null;
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            Gson gson = new Gson();
+            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, category, state, \"Status Reason\" StatusReason, to_email, cc_email, opened_at from Casen";
+            Object[] contacts = jdbcTemplate.queryForList(sql).toArray();
+            List<SerializationClass> casens = new ArrayList<>();
+            for (int i = 0; i < contacts.length; i++) {
+                String s = gson.toJson(contacts[i]);
+                SerializationClass casen = gson.fromJson(s, SerializationClass.class);
+                casens.add(casen);
+                casens.get(i).setCc_email("MUKUL.SHARMA1@contractor.tatacommunications.com");
+                casens.get(i).setTo_email("MUKUL.SHARMA1@contractor.tatacommunications.com");
+            }
+            Map<String, List<SerializationClass>> collect = casens.stream().collect(Collectors.groupingBy(SerializationClass::getAccountname));
+            Map<String, String> map = new HashMap<>();
+            List<Map<String, List<SerializationClass>>> list = new ArrayList<>();
+            for (String key : collect.keySet()) {
+                map.put(key, key);
+            }
+            for (Map.Entry<String, List<SerializationClass>> entry : collect.entrySet()) {
+                Map<String, List<SerializationClass>> updatedMap = new HashMap<>();
+                if (entry.getKey().equals(map.get(entry.getKey()))) {
+                    updatedMap.put("AccDetails", entry.getValue());
+                    list.add(updatedMap);
+                } else {
+                    updatedMap.put(entry.getKey(), entry.getValue());
+                }
+            }
+            for (int i = 0; i < list.size(); i++) {
+                String requestJson = gson.toJson(list.get(i));
+                HttpEntity<String> entity = new HttpEntity<String>(requestJson, headers);
+                response = restTemplate.postForObject(baseUrl1, entity, String.class);
+            }
+            System.out.println("+++++++++++++++++"+response);
+            return SuccessResponse.successHandler(HttpStatus.OK, false, response, null);
+        }catch (Exception ex){
+            System.out.println("Error---------"+ex.getMessage());
+            return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
         }
-        Map<String, List<SerializationClass>> collect = casens.stream().collect(Collectors.groupingBy(SerializationClass::getAccountName));
-//        Map<String, List<SerializationClass>> updatedMap = new HashMap<>();
-//        Map<String,String> map = new HashMap<>();
-//        for(String key:collect.keySet()) {
-//            map.put(key,key);
-//        }
-//        for (Map.Entry<String, List<SerializationClass>> entry : collect.entrySet()) {
-//            if (entry.getKey().equals(map.get(entry.getKey()))) {
-//                System.out.println(entry.getKey());
-//                System.out.println(map.get(entry.getKey()));
-//                updatedMap.put("AccDetails_"+count, entry.getValue());
-//                count++;
-//                System.out.println("++++++++++++++");
-//            } else {
-//                System.out.println("elseeeee");
-//                updatedMap.put(entry.getKey(), entry.getValue());
-//            }
-//        }
-        return ResponseEntity.ok(collect);
     }
 }

@@ -9,11 +9,11 @@ import lombok.*;
 @ToString
 public class SerializationClass {
 
-    private String ticketNumber;
+    private String TicketNumber;
 
-    private String serviceID;
+    private String ServiceID;
 
-    private String accountName;
+    private String Accountname;
 
     private String bandwidth;
 
@@ -21,7 +21,7 @@ public class SerializationClass {
 
     private String state;
 
-    private String statusReason;
+    private String StatusReason;
 
     private String to_email;
 
