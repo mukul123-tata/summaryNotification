@@ -17,6 +17,7 @@ import org.springframework.web.client.RestTemplate;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @RestController
@@ -51,9 +52,9 @@ public class MainController {
     TicketInfo ticketInfo = new TicketInfo();
     AdditionalInformation additionalInformation = new AdditionalInformation();
 
-    @Schedules({
-            @Scheduled(cron = "${cronjob.expression}"),
-    })
+//    @Schedules({
+//            @Scheduled(cron = "${cronjob.expression}"),
+//    })
     public ResponseEntity<?> createUser() throws Exception {
         try{
             Gson gson = new Gson();
@@ -63,7 +64,7 @@ public class MainController {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.add("Authorization", "Basic " + base64Creds);
 
-            String sql = "select TOP 10 \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, category, state, \"Status Reason\" StatusReason, to_email, cc_email, opened_at from Casen";
+            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at from Casen where \"Account name\"='BAJAJ HOUSING FINANCE LIMITED'";
             Object[] contacts = jdbcTemplate.queryForList(sql).stream().toArray();
 
             contact.setWatchList("str@gmail.com");
@@ -91,12 +92,12 @@ public class MainController {
 
             for(Object data:contacts){
                 String s = gson.toJson(data);
-                Casen casen = gson.fromJson(s, Casen.class);
+                CasenClass casen = gson.fromJson(s, CasenClass.class);
                 ticketInfo.setNumber(casen.getTicketNumber());
-                ticketInfo.setCreatedBy(casen.getOpened_at());
+                ticketInfo.setCreatedBy(casen.getOpenedAt());
                 ticketInfo.setServiceId(casen.getServiceID());
                 ticketInfo.setAccount(casen.getAccountname());
-                ticketInfo.setCategory(casen.getCategory());
+                ticketInfo.setCategory(casen.getImpact());
                 ticketInfo.setState(casen.getState());
                 ticketInfo.setStatusReason(casen.getStatusReason());
                 String requestJson  = gson.toJson(hashMap);
@@ -111,30 +112,31 @@ public class MainController {
         }
     }
 
-    @GetMapping("sendData/casen")
+    @PostMapping("sendData/casen")
     public ResponseEntity<?> send() throws JSONException {
         try {
+            int sendListSize=0;
             String response = null;
             headers.setContentType(MediaType.APPLICATION_JSON);
             Gson gson = new Gson();
-            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, category, state, \"Status Reason\" StatusReason, to_email, cc_email, opened_at from Casen";
+            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at from Casen where \"Account name\"='BAJAJ HOUSING FINANCE LIMITED'";
             Object[] contacts = jdbcTemplate.queryForList(sql).toArray();
-            List<SerializationClass> casens = new ArrayList<>();
+            List<CasenClass> casens = new ArrayList<>();
             for (int i = 0; i < contacts.length; i++) {
                 String s = gson.toJson(contacts[i]);
-                SerializationClass casen = gson.fromJson(s, SerializationClass.class);
+                CasenClass casen = gson.fromJson(s, CasenClass.class);
                 casens.add(casen);
-                casens.get(i).setCc_email("MUKUL.SHARMA1@contractor.tatacommunications.com,suvarna.jagadale@tatacommunications.com");
-                casens.get(i).setTo_email("MUKUL.SHARMA1@contractor.tatacommunications.com");
+                casens.get(i).setCcEmail("suvarna.jagadale@tatacommunications.com");
+                casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com");
             }
-            Map<String, List<SerializationClass>> collect = casens.stream().collect(Collectors.groupingBy(SerializationClass::getAccountname));
+            Map<String, List<CasenClass>> collect = casens.stream().collect(Collectors.groupingBy(CasenClass::getAccountname,Collectors.mapping(Function.identity(),Collectors.collectingAndThen(Collectors.toList(),e->e.stream().sorted(Comparator.comparing(CasenClass::getImpact).reversed()).collect(Collectors.toList())))));
             Map<String, String> map = new HashMap<>();
-            List<Map<String, List<SerializationClass>>> list = new ArrayList<>();
+            List<Map<String, List<CasenClass>>> list = new ArrayList<>();
             for (String key : collect.keySet()) {
                 map.put(key, key);
             }
-            for (Map.Entry<String, List<SerializationClass>> entry : collect.entrySet()) {
-                Map<String, List<SerializationClass>> updatedMap = new HashMap<>();
+            for (Map.Entry<String, List<CasenClass>> entry : collect.entrySet()) {
+                Map<String, List<CasenClass>> updatedMap = new HashMap<>();
                 if (entry.getKey().equals(map.get(entry.getKey()))) {
                     updatedMap.put("AccDetails", entry.getValue());
                     list.add(updatedMap);
@@ -143,11 +145,14 @@ public class MainController {
                 }
             }
             for (int i = 0; i < list.size(); i++) {
+                sendListSize+=list.get(i).get("AccDetails").size();
                 String requestJson = gson.toJson(list.get(i));
                 HttpEntity<String> entity = new HttpEntity<String>(requestJson, headers);
                 response = restTemplate.postForObject(baseUrl1, entity, String.class);
             }
-            System.out.println("+++++++++++++++++"+response);
+            System.out.println("Original list size are : "+contacts.length);
+            System.out.println("=================");
+            System.out.println("Send list size are : "+sendListSize);
             return SuccessResponse.successHandler(HttpStatus.OK, false, response, null);
         }catch (Exception ex){
             System.out.println("Error---------"+ex.getMessage());
