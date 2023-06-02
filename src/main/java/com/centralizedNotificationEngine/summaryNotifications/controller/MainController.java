@@ -118,6 +118,7 @@ public class MainController {
     })
     public ResponseEntity<?> send() throws JSONException {
         try {
+            System.out.println("Started");
             int sendListSize=0;
             String response = null;
             headers.setContentType(MediaType.APPLICATION_JSON);
