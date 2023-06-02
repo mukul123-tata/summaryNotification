@@ -112,7 +112,10 @@ public class MainController {
         }
     }
 
-    @PostMapping("sendData/casen")
+
+        @Schedules({
+            @Scheduled(cron = "${cronjob.expression}"),
+    })
     public ResponseEntity<?> send() throws JSONException {
         try {
             int sendListSize=0;
@@ -153,9 +156,18 @@ public class MainController {
             System.out.println("Original list size are : "+contacts.length);
             System.out.println("=================");
             System.out.println("Send list size are : "+sendListSize);
-            return SuccessResponse.successHandler(HttpStatus.OK, false, response, null);
+            return SuccessResponse.successHandler(HttpStatus.OK, false, response, list);
         }catch (Exception ex){
             System.out.println("Error---------"+ex.getMessage());
+            return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
+        }
+    }
+
+    @PostMapping("sendData/test")
+    public ResponseEntity<?> test(){
+        try{
+            return SuccessResponse.successHandler(HttpStatus.OK, false, "Done", null);
+        }catch (Exception ex){
             return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
         }
     }
