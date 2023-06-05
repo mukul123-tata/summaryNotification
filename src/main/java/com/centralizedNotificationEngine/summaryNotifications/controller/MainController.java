@@ -16,6 +16,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -118,6 +119,7 @@ public class MainController {
     })
     public ResponseEntity<?> send() throws JSONException {
         try {
+            System.out.println("Current time is :: " + LocalDate.now());
             System.out.println("Started");
             int sendListSize=0;
             String response = null;
