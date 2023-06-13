@@ -127,13 +127,18 @@ public class MainController {
             Gson gson = new Gson();
             String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at from Casen where \"Account name\"='BAJAJ HOUSING FINANCE LIMITED'";
             Object[] contacts = jdbcTemplate.queryForList(sql).toArray();
+            System.out.println("contacts++++"+contacts.length);
             List<CasenClass> casens = new ArrayList<>();
             for (int i = 0; i < contacts.length; i++) {
                 String s = gson.toJson(contacts[i]);
                 CasenClass casen = gson.fromJson(s, CasenClass.class);
                 casens.add(casen);
-                casens.get(i).setCcEmail("suvarna.jagadale@tatacommunications.com");
-                casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com");
+                if(casens.get(i).getAccountname().equals("")){
+                    return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Account can't be null");
+                }else {
+                    casens.get(i).setCcEmail("suvarna.jagadale@tatacommunications.com");
+                    casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com");
+                }
             }
             Map<String, List<CasenClass>> collect = casens.stream().collect(Collectors.groupingBy(CasenClass::getAccountname,Collectors.mapping(Function.identity(),Collectors.collectingAndThen(Collectors.toList(),e->e.stream().sorted(Comparator.comparing(CasenClass::getImpact).reversed()).collect(Collectors.toList())))));
             Map<String, String> map = new HashMap<>();
@@ -159,7 +164,7 @@ public class MainController {
             System.out.println("Original list size are : "+contacts.length);
             System.out.println("=================");
             System.out.println("Send list size are : "+sendListSize);
-            return SuccessResponse.successHandler(HttpStatus.OK, false, response, list);
+            return SuccessResponse.successHandler(HttpStatus.OK, false, response, contacts);
         }catch (Exception ex){
             System.out.println("Error---------"+ex.getMessage());
             return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
