@@ -1,4 +1,5 @@
 com\centralizedNotificationEngine\summaryNotifications\exceptions\GlobalExceptions.class
+com\centralizedNotificationEngine\summaryNotifications\config\RegexConfig.class
 com\centralizedNotificationEngine\summaryNotifications\controller\MainController.class
 com\centralizedNotificationEngine\summaryNotifications\entities\TicketInfo.class
 com\centralizedNotificationEngine\summaryNotifications\config\MyConfig.class

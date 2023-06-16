@@ -1,10 +1,13 @@
 package com.centralizedNotificationEngine.summaryNotifications.controller;
 
+import com.centralizedNotificationEngine.summaryNotifications.config.RegexConfig;
 import com.centralizedNotificationEngine.summaryNotifications.entities.*;
 import com.centralizedNotificationEngine.summaryNotifications.payload.ErrorResponse;
 import com.centralizedNotificationEngine.summaryNotifications.payload.SuccessResponse;
 import com.google.gson.Gson;
 import org.json.JSONException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -25,6 +28,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/data")
 @CrossOrigin("*")
 public class MainController {
+
+    private static final Logger logger = LoggerFactory.getLogger(MainController.class);
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -52,6 +57,7 @@ public class MainController {
     EventName eventName  = new EventName();
     TicketInfo ticketInfo = new TicketInfo();
     AdditionalInformation additionalInformation = new AdditionalInformation();
+    RegexConfig regexConfig = new RegexConfig();
 
 //    @Schedules({
 //            @Scheduled(cron = "${cronjob.expression}"),
@@ -125,20 +131,39 @@ public class MainController {
             String response = null;
             headers.setContentType(MediaType.APPLICATION_JSON);
             Gson gson = new Gson();
-            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at from Casen where \"Account name\"='BAJAJ HOUSING FINANCE LIMITED'";
+            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at from Casen where \"Account name\"='Axis Bank Limited'";
             Object[] contacts = jdbcTemplate.queryForList(sql).toArray();
-            System.out.println("contacts++++"+contacts.length);
             List<CasenClass> casens = new ArrayList<>();
             for (int i = 0; i < contacts.length; i++) {
                 String s = gson.toJson(contacts[i]);
                 CasenClass casen = gson.fromJson(s, CasenClass.class);
                 casens.add(casen);
+
+                //Validation's of accountNumber
                 if(casens.get(i).getAccountname().equals("")){
-                    return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Account can't be null");
-                }else {
-                    casens.get(i).setCcEmail("suvarna.jagadale@tatacommunications.com");
-                    casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com");
+                    logger.info("accountNumber can't be null");
+                    return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"accountNumber can't be null");
                 }
+
+                //Validation's of email format
+                if(casens.get(i).getCcEmail().contains(",") || casens.get(i).getToEmail().contains(",")){
+                    logger.info("Invalid email format");
+                    return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Invalid email format");
+                }
+
+                //Validation's of toEmail
+                String toEmail = casens.get(i).getToEmail();
+                String[] toEmailSplit = toEmail.split(";");
+                for(int t = 0; t < toEmailSplit.length; t++){
+                    if(!(regexConfig.validateEmail(toEmailSplit[t]))){
+                        logger.info("Invalid to_email");
+                        return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Invalid to_email");
+                    }
+                }
+
+                casens.get(i).setCcEmail("suvarna.jagadale@tatacommunications.com");
+                casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com");
+
             }
             Map<String, List<CasenClass>> collect = casens.stream().collect(Collectors.groupingBy(CasenClass::getAccountname,Collectors.mapping(Function.identity(),Collectors.collectingAndThen(Collectors.toList(),e->e.stream().sorted(Comparator.comparing(CasenClass::getImpact).reversed()).collect(Collectors.toList())))));
             Map<String, String> map = new HashMap<>();
@@ -174,7 +199,9 @@ public class MainController {
     @PostMapping("sendData/test")
     public ResponseEntity<?> test(){
         try{
-            return SuccessResponse.successHandler(HttpStatus.OK, false, "Done", null);
+            String sql = "select * from Casen";
+            Object[] contacts = jdbcTemplate.queryForList(sql).toArray();
+            return SuccessResponse.successHandler(HttpStatus.OK, false, "Done", contacts);
         }catch (Exception ex){
             return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
         }
