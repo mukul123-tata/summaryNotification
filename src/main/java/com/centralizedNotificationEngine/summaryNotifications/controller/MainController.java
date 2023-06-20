@@ -120,9 +120,10 @@ public class MainController {
     }
 
 
-        @Schedules({
-            @Scheduled(cron = "${cronjob.expression}"),
-    })
+//        @Schedules({
+//            @Scheduled(cron = "${cronjob.expression}"),
+//    })
+    @PostMapping("/sendData/casen")
     public ResponseEntity<?> send() throws JSONException {
         try {
             System.out.println("Current time is :: " + LocalDate.now());
@@ -141,14 +142,17 @@ public class MainController {
 
                 //Validation's of accountNumber
                 if(casens.get(i).getAccountname().equals("")){
-                    logger.info("accountNumber can't be null");
-                    return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"accountNumber can't be null");
+                    logger.info("Account Number is mandatory");
+                    return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Account Number is mandatory");
                 }
 
                 //Validation's of email format
                 if(casens.get(i).getCcEmail().contains(",") || casens.get(i).getToEmail().contains(",")){
                     logger.info("Invalid email format");
                     return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Invalid email format");
+                }else if(casens.get(i).getToEmail().equals("")){
+                    logger.info("Email is mandatory");
+                    return ErrorResponse.errorHandler(HttpStatus.NOT_FOUND,true,"Email is mandatory");
                 }
 
                 //Validation's of toEmail
@@ -156,10 +160,20 @@ public class MainController {
                 String[] toEmailSplit = toEmail.split(";");
                 for(int t = 0; t < toEmailSplit.length; t++){
                     if(!(regexConfig.validateEmail(toEmailSplit[t]))){
-                        logger.info("Invalid to_email");
-                        return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Invalid to_email");
+                        logger.info("To List is invalid");
+                        return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"To List is invalid");
                     }
                 }
+
+                //Validation's of ccEmail
+//                String ccEmail = casens.get(i).getCcEmail();
+//                String[] ccEmailSplit = ccEmail.split(";");
+//                for(int c = 0; c < ccEmailSplit.length; c++){
+//                    if(!(regexConfig.validateEmail(ccEmailSplit[c]))){
+//                        logger.info("Cc list is invalid");
+//                        return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Cc List is invalid");
+//                    }
+//                }
 
                 casens.get(i).setCcEmail("suvarna.jagadale@tatacommunications.com");
                 casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com");
@@ -199,7 +213,9 @@ public class MainController {
     @PostMapping("sendData/test")
     public ResponseEntity<?> test(){
         try{
-            String sql = "select * from Casen";
+            //jdbcTemplate.execute("CREATE TABLE customer(" + "id SERIAL, name VARCHAR(255), age NUMERIC(2))");
+            //jdbcTemplate.execute("insert into customer (id, name, age) values (2, 'B', 22)");
+            String sql = "select * from customer";
             Object[] contacts = jdbcTemplate.queryForList(sql).toArray();
             return SuccessResponse.successHandler(HttpStatus.OK, false, "Done", contacts);
         }catch (Exception ex){
