@@ -1,5 +1,7 @@
 package com.centralizedNotificationEngine.summaryNotifications.controller;
 
+import com.centralizedNotificationEngine.summaryNotifications.config.ConnectingToDB;
+import com.centralizedNotificationEngine.summaryNotifications.config.Constant;
 import com.centralizedNotificationEngine.summaryNotifications.config.RegexConfig;
 import com.centralizedNotificationEngine.summaryNotifications.entities.*;
 import com.centralizedNotificationEngine.summaryNotifications.payload.ErrorResponse;
@@ -19,6 +21,9 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
@@ -58,11 +63,12 @@ public class MainController {
     TicketInfo ticketInfo = new TicketInfo();
     AdditionalInformation additionalInformation = new AdditionalInformation();
     RegexConfig regexConfig = new RegexConfig();
+    ConnectingToDB connectingToDB = new ConnectingToDB();
 
 //    @Schedules({
 //            @Scheduled(cron = "${cronjob.expression}"),
 //    })
-    public ResponseEntity<?> createUser() throws Exception {
+    public ResponseEntity<?> sendNotification() throws Exception {
         try{
             Gson gson = new Gson();
             String response = null;
@@ -71,7 +77,7 @@ public class MainController {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.add("Authorization", "Basic " + base64Creds);
 
-            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at from Casen where \"Account name\"='BAJAJ HOUSING FINANCE LIMITED'";
+            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at from Casen where \"Account name\"='Axis Bank Limited'";
             Object[] contacts = jdbcTemplate.queryForList(sql).stream().toArray();
 
             contact.setWatchList("str@gmail.com");
@@ -120,13 +126,11 @@ public class MainController {
     }
 
 
-//        @Schedules({
-//            @Scheduled(cron = "${cronjob.expression}"),
-//    })
-    @PostMapping("/sendData/casen")
-    public ResponseEntity<?> send() throws JSONException {
+        @Schedules({
+            @Scheduled(cron = "${cronjob.expression}"),
+    })
+    public ResponseEntity<?> sendMail() throws JSONException, SQLException, ClassNotFoundException {
         try {
-            System.out.println("Current time is :: " + LocalDate.now());
             System.out.println("Started");
             int sendListSize=0;
             String response = null;
@@ -140,18 +144,21 @@ public class MainController {
                 CasenClass casen = gson.fromJson(s, CasenClass.class);
                 casens.add(casen);
 
-                //Validation's of accountNumber
+                //Validation's of accountName
                 if(casens.get(i).getAccountname().equals("")){
-                    logger.info("Account Number is mandatory");
-                    return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Account Number is mandatory");
+                    logger.info("Account Name is mandatory");
+                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('null', 404, 'Account Name is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
+                    return ErrorResponse.errorHandler(HttpStatus.NOT_FOUND,true,"Account Name is mandatory");
                 }
 
                 //Validation's of email format
                 if(casens.get(i).getCcEmail().contains(",") || casens.get(i).getToEmail().contains(",")){
                     logger.info("Invalid email format");
+                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('"+casens.get(i).getAccountname()+"', 400, 'Invalid email format', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
                     return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Invalid email format");
                 }else if(casens.get(i).getToEmail().equals("")){
                     logger.info("Email is mandatory");
+                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('"+casens.get(i).getAccountname()+"', 404, 'Email is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
                     return ErrorResponse.errorHandler(HttpStatus.NOT_FOUND,true,"Email is mandatory");
                 }
 
@@ -161,6 +168,7 @@ public class MainController {
                 for(int t = 0; t < toEmailSplit.length; t++){
                     if(!(regexConfig.validateEmail(toEmailSplit[t]))){
                         logger.info("To List is invalid");
+                        connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('"+casens.get(i).getAccountname()+"', 400, 'To List is invalid', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
                         return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"To List is invalid");
                     }
                 }
@@ -171,11 +179,12 @@ public class MainController {
 //                for(int c = 0; c < ccEmailSplit.length; c++){
 //                    if(!(regexConfig.validateEmail(ccEmailSplit[c]))){
 //                        logger.info("Cc list is invalid");
+//                        connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('"+casens.get(i).getAccountname()+"', 400, 'Cc List is invalid', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
 //                        return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Cc List is invalid");
 //                    }
 //                }
 
-                casens.get(i).setCcEmail("suvarna.jagadale@tatacommunications.com");
+                casens.get(i).setCcEmail("MUKUL.SHARMA1@contractor.tatacommunications.com");
                 casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com");
 
             }
@@ -206,18 +215,18 @@ public class MainController {
             return SuccessResponse.successHandler(HttpStatus.OK, false, response, contacts);
         }catch (Exception ex){
             System.out.println("Error---------"+ex.getMessage());
+            connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('null', 400, '"+ex.getMessage()+"', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
             return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
         }
     }
 
-    @PostMapping("sendData/test")
+    @GetMapping("sendData/test")
     public ResponseEntity<?> test(){
         try{
-            //jdbcTemplate.execute("CREATE TABLE customer(" + "id SERIAL, name VARCHAR(255), age NUMERIC(2))");
-            //jdbcTemplate.execute("insert into customer (id, name, age) values (2, 'B', 22)");
-            String sql = "select * from customer";
-            Object[] contacts = jdbcTemplate.queryForList(sql).toArray();
-            return SuccessResponse.successHandler(HttpStatus.OK, false, "Done", contacts);
+           //connectingToDB.Execute("CREATE TABLE CN_LOG_ERROR(" + "AccountName VARCHAR(255), Status NUMERIC(3), Message VARCHAR(255), API_Name VARCHAR(255), Created_At datetime default CURRENT_TIMESTAMP)");
+            // connectingToDB.Execute("DROP TABLE CN_LOG_ERROR");
+           List<Map<String,Object>> data = connectingToDB.QueryForList("select * from CN_LOG_ERROR");
+            return SuccessResponse.successHandler(HttpStatus.OK, false, "Successfully operation performed", data);
         }catch (Exception ex){
             return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
         }

@@ -1,20 +1,31 @@
 package com.centralizedNotificationEngine.summaryNotifications.config;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ConnectingToDB {
 
-    public static void main(String[] args) throws SQLException, ClassNotFoundException {
-        //Loading the required JDBC Driver class
-        //Creating a connection to the database
+    public void Execute(String sqlStr) throws SQLException {
         Connection connection = DriverManager.getConnection("jdbc:mysql://10.133.208.200:3306/flt","flt","flt123");
-
-        //Executing SQL query and fetching the result
         Statement statement = connection.createStatement();
-        String sqlStr = "select * from TOP_324_REPORT";
+        statement.execute(sqlStr);
+    }
+
+    public List<Map<String, Object>> QueryForList(String sqlStr) throws SQLException {
+        Connection connection = DriverManager.getConnection("jdbc:mysql://10.133.208.200:3306/flt","flt","flt123");
+        Statement statement = connection.createStatement();
         ResultSet resultSet = statement.executeQuery(sqlStr);
+        List<Map<String,Object>> rows = new ArrayList<Map<String,Object>>();
         while (resultSet.next()) {
-            System.out.println(resultSet.getMetaData());
+            Map<String,Object> map = new HashMap<String,Object>();
+            for (int i = 0; i < resultSet.getMetaData().getColumnCount(); i++) {
+                map.put(resultSet.getMetaData().getColumnName(i+1),resultSet.getObject(i+1));
+            }
+            rows.add(map);
         }
+        return rows;
     }
 }
