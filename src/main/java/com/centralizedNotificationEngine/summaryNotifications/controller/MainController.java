@@ -2,6 +2,7 @@ package com.centralizedNotificationEngine.summaryNotifications.controller;
 
 import com.centralizedNotificationEngine.summaryNotifications.config.ConnectingToDB;
 import com.centralizedNotificationEngine.summaryNotifications.config.Constant;
+import com.centralizedNotificationEngine.summaryNotifications.config.EncryptionConfig;
 import com.centralizedNotificationEngine.summaryNotifications.config.RegexConfig;
 import com.centralizedNotificationEngine.summaryNotifications.entities.*;
 import com.centralizedNotificationEngine.summaryNotifications.payload.ErrorResponse;
@@ -18,13 +19,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.annotation.Schedules;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -64,6 +59,8 @@ public class MainController {
     AdditionalInformation additionalInformation = new AdditionalInformation();
     RegexConfig regexConfig = new RegexConfig();
     ConnectingToDB connectingToDB = new ConnectingToDB();
+    EncryptionConfig encryptionConfig = new EncryptionConfig();
+
 
 //    @Schedules({
 //            @Scheduled(cron = "${cronjob.expression}"),
@@ -184,8 +181,22 @@ public class MainController {
 //                    }
 //                }
 
-                casens.get(i).setCcEmail("MUKUL.SHARMA1@contractor.tatacommunications.com");
-                casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com");
+                casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com;suvarna.jagadale@tatacommunications.com");
+                String to_Email  = casens.get(i).getToEmail();
+                String[] to_Email_Split = to_Email.split(";");
+                if(to_Email_Split.length==1){
+                    String encryptToEmail = encryptionConfig.encrypt(casens.get(i).getToEmail());
+                    casens.get(i).setToEmail(encryptToEmail);
+                }else{
+                    String s1="";
+                    for(int t = 0; t < to_Email_Split.length; t++){
+                        String encryptToEmail = encryptionConfig.encrypt(to_Email_Split[t]);
+                        s1+=encryptToEmail+";";
+                    }
+                    StringBuffer sb= new StringBuffer(s1);
+                    sb.deleteCharAt(sb.length()-1);
+                    casens.get(i).setToEmail(sb.toString());
+                }
 
             }
             Map<String, List<CasenClass>> collect = casens.stream().collect(Collectors.groupingBy(CasenClass::getAccountname,Collectors.mapping(Function.identity(),Collectors.collectingAndThen(Collectors.toList(),e->e.stream().sorted(Comparator.comparing(CasenClass::getImpact).reversed()).collect(Collectors.toList())))));
@@ -212,7 +223,7 @@ public class MainController {
             System.out.println("Original list size are : "+contacts.length);
             System.out.println("=================");
             System.out.println("Send list size are : "+sendListSize);
-            return SuccessResponse.successHandler(HttpStatus.OK, false, response, contacts);
+            return SuccessResponse.successHandler(HttpStatus.OK, false, response, list);
         }catch (Exception ex){
             System.out.println("Error---------"+ex.getMessage());
             connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('null', 400, '"+ex.getMessage()+"', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
@@ -231,4 +242,5 @@ public class MainController {
             return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
         }
     }
+
 }
