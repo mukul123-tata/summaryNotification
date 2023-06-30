@@ -144,18 +144,18 @@ public class MainController {
                 //Validation's of accountName
                 if(casens.get(i).getAccountname().equals("")){
                     logger.info("Account Name is mandatory");
-                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('null', 400, 'Account Name is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
+                    //connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('null', 400, 'Account Name is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
                     return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Account Name is mandatory");
                 }
 
                 //Validation's of email format
                 if(casens.get(i).getCcEmail().contains(",") || casens.get(i).getToEmail().contains(",")){
                     logger.info("Invalid email format");
-                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('"+casens.get(i).getAccountname()+"', 400, 'Invalid email format', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
+                    //connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('"+casens.get(i).getAccountname()+"', 400, 'Invalid email format', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
                     return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Invalid email format");
                 }else if(casens.get(i).getToEmail().equals("")){
                     logger.info("Email is mandatory");
-                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('"+casens.get(i).getAccountname()+"', 400, 'Email is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
+                    //connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('"+casens.get(i).getAccountname()+"', 400, 'Email is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
                     return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Email is mandatory");
                 }
 
@@ -165,7 +165,7 @@ public class MainController {
                 for(int t = 0; t < toEmailSplit.length; t++){
                     if(!(regexConfig.validateEmail(toEmailSplit[t]))){
                         logger.info("To List is invalid");
-                        connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('"+casens.get(i).getAccountname()+"', 400, 'To List is invalid', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
+                        //connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('"+casens.get(i).getAccountname()+"', 400, 'To List is invalid', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
                         return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"To List is invalid");
                     }
                 }
@@ -226,7 +226,7 @@ public class MainController {
             return SuccessResponse.successHandler(HttpStatus.OK, false, response, list);
         }catch (Exception ex){
             System.out.println("Error---------"+ex.getMessage());
-            connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('null', 400, '"+ex.getMessage()+"', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
+            //connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('null', 400, '"+ex.getMessage()+"', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
             return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
         }
     }
