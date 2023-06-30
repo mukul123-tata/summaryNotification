@@ -7,10 +7,17 @@ public class RegexConfig {
 
     String emailRegex = "^(.+)@(.+)$";
     String accountNameRegex = "^[a-zA-Z\\s]*$";
+    String eventNameRegex = "^[a-zA-Z_\\s]*$";
 
     public Boolean validateEmail(String email){
         Pattern pattern = Pattern.compile(emailRegex);
         Matcher matcher = pattern.matcher(email);
+        return matcher.matches();
+    }
+
+    public Boolean validateEventName(String eventName){
+        Pattern pattern = Pattern.compile(eventNameRegex);
+        Matcher matcher = pattern.matcher(eventName);
         return matcher.matches();
     }
 
