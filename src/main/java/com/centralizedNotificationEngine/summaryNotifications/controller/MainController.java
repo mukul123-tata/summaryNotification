@@ -15,8 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.scheduling.annotation.Schedules;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import java.sql.SQLException;
@@ -65,6 +63,7 @@ public class MainController {
 //    @Schedules({
 //            @Scheduled(cron = "${cronjob.expression}"),
 //    })
+    @PostMapping("/sendData/rfTemplate")
     public ResponseEntity<?> sendNotification() throws Exception {
         try{
             Gson gson = new Gson();
@@ -77,16 +76,10 @@ public class MainController {
             String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at from Casen where \"Account name\"='Axis Bank Limited'";
             Object[] contacts = jdbcTemplate.queryForList(sql).stream().toArray();
 
-            contact.setWatchList("str@gmail.com");
-            contact.setTo("MUKUL.SHARMA1@contractor.tatacommunications.com");
-            contact.setCc("MUKUL.SHARMA1@contractor.tatacommunications.com");
-
             notification.setOrder("str");
             notification.setType("Spring boot kafka integration with MS Teams Graph API");
 
             eventName.setEventName("email body to send msg  Spring boot kafka integration with MS Teams Graph API");
-
-            additionalInformation.setTemplateName("create incident ticket");
 
             Notes notes1 = new Notes("string","testingforAPI");
             Notes notes2 = new Notes("string","testingforAPI");
@@ -100,32 +93,49 @@ public class MainController {
             hashMap.put("additionalInfo",additionalInformation);
             hashMap.put("notes",notesArrayList);
 
-            for(Object data:contacts){
-                String s = gson.toJson(data);
+            List<CasenClass> casens = new ArrayList<>();
+            for(int i=0;i<contacts.length;i++){
+                String s = gson.toJson(contacts[i]);
                 CasenClass casen = gson.fromJson(s, CasenClass.class);
-                ticketInfo.setNumber(casen.getTicketNumber());
-                ticketInfo.setCreatedBy(casen.getOpenedAt());
-                ticketInfo.setServiceId(casen.getServiceID());
-                ticketInfo.setAccount(casen.getAccountname());
-                ticketInfo.setCategory(casen.getImpact());
-                ticketInfo.setState(casen.getState());
-                ticketInfo.setStatusReason(casen.getStatusReason());
-                String requestJson  = gson.toJson(hashMap);
-                HttpEntity<String> entity = new HttpEntity<String>(requestJson,headers);
-                response = restTemplate.postForObject(baseUrl, entity, String.class);
+                casens.add(casen);
+                casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com;suvarna.jagadale@tatacommunications.com");
+                String to_Email  = casens.get(i).getToEmail();
+                String[] to_Email_Split = to_Email.split(";");
+                if(to_Email_Split.length==1){
+                    String encryptToEmail = encryptionConfig.encrypt(casens.get(i).getToEmail());
+                    casens.get(i).setToEmail(encryptToEmail);
+                }else{
+                    String s1="";
+                    for(int t = 0; t < to_Email_Split.length; t++){
+                        String encryptToEmail = encryptionConfig.encrypt(to_Email_Split[t]);
+                        s1+=encryptToEmail+";";
+                    }
+                    StringBuffer sb= new StringBuffer(s1);
+                    sb.deleteCharAt(sb.length()-1);
+                    casens.get(i).setToEmail(sb.toString());
+                }
             }
-            System.out.println("+++++++++++++++++"+response);
-            return SuccessResponse.successHandler(HttpStatus.OK,false,response,null);
+
+            additionalInformation.setAccDetails(casens);
+
+            contact.setWatchList("str@gmail.com");
+            contact.setTo(casens.get(0).getToEmail());
+            contact.setCc("");
+
+            String requestJson  = gson.toJson(hashMap);
+            HttpEntity<String> entity = new HttpEntity<String>(requestJson,headers);
+            response = restTemplate.postForObject(baseUrl, entity, String.class);
+            return SuccessResponse.successHandler(HttpStatus.OK,false,response,hashMap);
         }catch (Exception ex){
-            System.out.println("Error---------"+ex.getMessage());
             return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
         }
     }
 
 
-        @Schedules({
-            @Scheduled(cron = "${cronjob.expression}"),
-    })
+//        @Schedules({
+//            @Scheduled(cron = "${cronjob.expression}"),
+//    })
+    @PostMapping("/sendData/summaryNotification")
     public ResponseEntity<?> sendMail() throws JSONException, SQLException, ClassNotFoundException {
         try {
             System.out.println("Started");
@@ -144,18 +154,18 @@ public class MainController {
                 //Validation's of accountName
                 if(casens.get(i).getAccountname().equals("")){
                     logger.info("Account Name is mandatory");
-                    //connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('null', 400, 'Account Name is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
+                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('null', 400, 'Account Name is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
                     return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Account Name is mandatory");
                 }
 
                 //Validation's of email format
                 if(casens.get(i).getCcEmail().contains(",") || casens.get(i).getToEmail().contains(",")){
                     logger.info("Invalid email format");
-                    //connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('"+casens.get(i).getAccountname()+"', 400, 'Invalid email format', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
+                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('"+casens.get(i).getAccountname()+"', 400, 'Invalid email format', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
                     return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Invalid email format");
                 }else if(casens.get(i).getToEmail().equals("")){
                     logger.info("Email is mandatory");
-                    //connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('"+casens.get(i).getAccountname()+"', 400, 'Email is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
+                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('"+casens.get(i).getAccountname()+"', 400, 'Email is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
                     return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Email is mandatory");
                 }
 
@@ -165,7 +175,7 @@ public class MainController {
                 for(int t = 0; t < toEmailSplit.length; t++){
                     if(!(regexConfig.validateEmail(toEmailSplit[t]))){
                         logger.info("To List is invalid");
-                        //connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('"+casens.get(i).getAccountname()+"', 400, 'To List is invalid', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
+                        connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('"+casens.get(i).getAccountname()+"', 400, 'To List is invalid', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
                         return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"To List is invalid");
                     }
                 }
@@ -226,7 +236,7 @@ public class MainController {
             return SuccessResponse.successHandler(HttpStatus.OK, false, response, list);
         }catch (Exception ex){
             System.out.println("Error---------"+ex.getMessage());
-            //connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('null', 400, '"+ex.getMessage()+"', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
+            connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('null', 400, '"+ex.getMessage()+"', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
             return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
         }
     }
