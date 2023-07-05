@@ -18,6 +18,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -58,6 +59,7 @@ public class MainController {
     RegexConfig regexConfig = new RegexConfig();
     ConnectingToDB connectingToDB = new ConnectingToDB();
     EncryptionConfig encryptionConfig = new EncryptionConfig();
+    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
 
 //    @Schedules({
@@ -153,19 +155,25 @@ public class MainController {
 
                 //Validation's of accountName
                 if(casens.get(i).getAccountname().equals("")){
+                    Date date = new Date();
+                    String strDate = formatter.format(date);
                     logger.info("Account Name is mandatory");
-                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('null', 400, 'Account Name is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
+                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('null', 400, 'Account Name is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
                     return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Account Name is mandatory");
                 }
 
                 //Validation's of email format
                 if(casens.get(i).getCcEmail().contains(",") || casens.get(i).getToEmail().contains(",")){
+                    Date date = new Date();
+                    String strDate = formatter.format(date);
                     logger.info("Invalid email format");
-                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('"+casens.get(i).getAccountname()+"', 400, 'Invalid email format', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
+                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'Invalid email format', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
                     return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Invalid email format");
                 }else if(casens.get(i).getToEmail().equals("")){
+                    Date date = new Date();
+                    String strDate = formatter.format(date);
                     logger.info("Email is mandatory");
-                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('"+casens.get(i).getAccountname()+"', 400, 'Email is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
+                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'Email is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
                     return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Email is mandatory");
                 }
 
@@ -174,8 +182,10 @@ public class MainController {
                 String[] toEmailSplit = toEmail.split(";");
                 for(int t = 0; t < toEmailSplit.length; t++){
                     if(!(regexConfig.validateEmail(toEmailSplit[t]))){
+                        Date date = new Date();
+                        String strDate = formatter.format(date);
                         logger.info("To List is invalid");
-                        connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('"+casens.get(i).getAccountname()+"', 400, 'To List is invalid', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
+                        connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'To List is invalid', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
                         return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"To List is invalid");
                     }
                 }
@@ -185,8 +195,10 @@ public class MainController {
 //                String[] ccEmailSplit = ccEmail.split(";");
 //                for(int c = 0; c < ccEmailSplit.length; c++){
 //                    if(!(regexConfig.validateEmail(ccEmailSplit[c]))){
+//                        Date date = new Date();
+//					      String strDate = formatter.format(date);
 //                        logger.info("Cc list is invalid");
-//                        connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('"+casens.get(i).getAccountname()+"', 400, 'Cc List is invalid', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
+//                        connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'Cc List is invalid', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
 //                        return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Cc List is invalid");
 //                    }
 //                }
@@ -236,16 +248,19 @@ public class MainController {
             return SuccessResponse.successHandler(HttpStatus.OK, false, response, list);
         }catch (Exception ex){
             System.out.println("Error---------"+ex.getMessage());
-            connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name) values ('null', 400, '"+ex.getMessage()+"', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"')");
+            Date date = new Date();
+            String strDate = formatter.format(date);
+            connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('null', 400, '"+ex.getMessage()+"', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
             return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
         }
     }
 
-    @GetMapping("sendData/test")
-    public ResponseEntity<?> test(){
+    @GetMapping("fetchData/errorLogs")
+    public ResponseEntity<?> findErrorLogs(){
         try{
-           //connectingToDB.Execute("CREATE TABLE CN_LOG_ERROR(" + "AccountName VARCHAR(255), Status NUMERIC(3), Message VARCHAR(255), API_Name VARCHAR(255), Created_At datetime default CURRENT_TIMESTAMP)");
-            // connectingToDB.Execute("DROP TABLE CN_LOG_ERROR");
+           //connectingToDB.Execute("CREATE TABLE CN_LOG_ERROR(" + "AccountName VARCHAR(255), Status NUMERIC(3), Message VARCHAR(255), API_Name VARCHAR(255), Created_At VARCHAR(255))");
+             //connectingToDB.Execute("DROP TABLE CN_LOG_ERROR");
+            //connectingToDB.Execute("DELETE FROM CN_LOG_ERROR");
            List<Map<String,Object>> data = connectingToDB.QueryForList("select * from CN_LOG_ERROR");
             return SuccessResponse.successHandler(HttpStatus.OK, false, "Successfully operation performed", data);
         }catch (Exception ex){
