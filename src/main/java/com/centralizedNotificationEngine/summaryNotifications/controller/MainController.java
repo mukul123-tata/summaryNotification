@@ -15,8 +15,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.annotation.Schedules;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -43,10 +49,13 @@ public class MainController {
     private String password;
 
     @Value("${http.notifier.api.url}")
-    private String baseUrl;
+    private String RfTemplateBaseUrl;
 
     @Value("${http.notifier.summary.api.url}")
-    private String baseUrl1;
+    private String SummaryNotificationbaseUrl;
+
+    @Value("${http.notifier.summary.with.attachment.api.url}")
+    private String SummaryNotificationWithAttachmentBaseUrl;
 
     HashMap<Object,Object> hashMap = new HashMap<>();
     HttpHeaders headers = new HttpHeaders();
@@ -57,16 +66,15 @@ public class MainController {
     TicketInfo ticketInfo = new TicketInfo();
     AdditionalInformation additionalInformation = new AdditionalInformation();
     RegexConfig regexConfig = new RegexConfig();
-    ConnectingToDB connectingToDB = new ConnectingToDB();
+//    ConnectingToDB connectingToDB = new ConnectingToDB();
     EncryptionConfig encryptionConfig = new EncryptionConfig();
     SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
 
-//    @Schedules({
-//            @Scheduled(cron = "${cronjob.expression}"),
-//    })
-    @PostMapping("/sendData/rfTemplate")
-    public ResponseEntity<?> sendNotification() throws Exception {
+    @Schedules({
+            @Scheduled(cron = "${cronjob.expression}"),
+    })
+    public ResponseEntity<?> sendRfTemplateNotificationV1() throws Exception {
         try{
             Gson gson = new Gson();
             String response = null;
@@ -126,7 +134,7 @@ public class MainController {
 
             String requestJson  = gson.toJson(hashMap);
             HttpEntity<String> entity = new HttpEntity<String>(requestJson,headers);
-            response = restTemplate.postForObject(baseUrl, entity, String.class);
+            response = restTemplate.postForObject(RfTemplateBaseUrl, entity, String.class);
             return SuccessResponse.successHandler(HttpStatus.OK,false,response,hashMap);
         }catch (Exception ex){
             return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
@@ -134,17 +142,15 @@ public class MainController {
     }
 
 
-//        @Schedules({
-//            @Scheduled(cron = "${cronjob.expression}"),
-//    })
-    @PostMapping("/sendData/summaryNotification")
-    public ResponseEntity<?> sendMail() throws JSONException, SQLException, ClassNotFoundException {
+            @Schedules({
+            @Scheduled(cron = "${cronjob.expression}"),
+    })
+    public ResponseEntity<?> sendSummaryNotificationV1() throws JSONException, SQLException, ClassNotFoundException {
         try {
-            System.out.println("Started");
             int sendListSize=0;
             String response = null;
-            headers.setContentType(MediaType.APPLICATION_JSON);
             Gson gson = new Gson();
+            headers.setContentType(MediaType.APPLICATION_JSON);
             String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at from Casen where \"Account name\"='Axis Bank Limited'";
             Object[] contacts = jdbcTemplate.queryForList(sql).toArray();
             List<CasenClass> casens = new ArrayList<>();
@@ -158,7 +164,7 @@ public class MainController {
                     Date date = new Date();
                     String strDate = formatter.format(date);
                     logger.info("Account Name is mandatory");
-                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('null', 400, 'Account Name is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
+                  //  connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('null', 400, 'Account Name is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
                     return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Account Name is mandatory");
                 }
 
@@ -167,13 +173,13 @@ public class MainController {
                     Date date = new Date();
                     String strDate = formatter.format(date);
                     logger.info("Invalid email format");
-                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'Invalid email format', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
+                  //  connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'Invalid email format', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
                     return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Invalid email format");
                 }else if(casens.get(i).getToEmail().equals("")){
                     Date date = new Date();
                     String strDate = formatter.format(date);
                     logger.info("Email is mandatory");
-                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'Email is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
+                 //   connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'Email is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
                     return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Email is mandatory");
                 }
 
@@ -185,7 +191,7 @@ public class MainController {
                         Date date = new Date();
                         String strDate = formatter.format(date);
                         logger.info("To List is invalid");
-                        connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'To List is invalid', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
+                     //   connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'To List is invalid', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
                         return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"To List is invalid");
                     }
                 }
@@ -239,8 +245,8 @@ public class MainController {
             for (int i = 0; i < list.size(); i++) {
                 sendListSize+=list.get(i).get("AccDetails").size();
                 String requestJson = gson.toJson(list.get(i));
-                HttpEntity<String> entity = new HttpEntity<String>(requestJson, headers);
-                response = restTemplate.postForObject(baseUrl1, entity, String.class);
+                HttpEntity<String> entity = new HttpEntity<String>(requestJson,headers);
+                response = restTemplate.postForObject(SummaryNotificationbaseUrl, entity, String.class);
             }
             System.out.println("Original list size are : "+contacts.length);
             System.out.println("=================");
@@ -250,22 +256,160 @@ public class MainController {
             System.out.println("Error---------"+ex.getMessage());
             Date date = new Date();
             String strDate = formatter.format(date);
-            connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('null', 400, '"+ex.getMessage()+"', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
+          //  connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('null', 400, '"+ex.getMessage()+"', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
             return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
         }
     }
 
-    @GetMapping("fetchData/errorLogs")
-    public ResponseEntity<?> findErrorLogs(){
-        try{
-           //connectingToDB.Execute("CREATE TABLE CN_LOG_ERROR(" + "AccountName VARCHAR(255), Status NUMERIC(3), Message VARCHAR(255), API_Name VARCHAR(255), Created_At VARCHAR(255))");
-             //connectingToDB.Execute("DROP TABLE CN_LOG_ERROR");
-            //connectingToDB.Execute("DELETE FROM CN_LOG_ERROR");
-           List<Map<String,Object>> data = connectingToDB.QueryForList("select * from CN_LOG_ERROR");
-            return SuccessResponse.successHandler(HttpStatus.OK, false, "Successfully operation performed", data);
+
+
+    //        @Schedules({
+//            @Scheduled(cron = "${cronjob.expression}"),
+//    })
+    @PostMapping("/v1.1/sendData/summaryNotification")
+    public ResponseEntity<?> sendSummaryNotificationV2(@RequestPart("file")MultipartFile file) throws JSONException, SQLException, ClassNotFoundException {
+        try {
+            int sendListSize=0;
+            String response = null;
+            Gson gson = new Gson();
+            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at from Casen where \"Account name\"='Axis Bank Limited'";
+            Object[] contacts = jdbcTemplate.queryForList(sql).toArray();
+            List<CasenClass> casens = new ArrayList<>();
+            for (int i = 0; i < contacts.length; i++) {
+                String s = gson.toJson(contacts[i]);
+                CasenClass casen = gson.fromJson(s, CasenClass.class);
+                casens.add(casen);
+
+                //Validation's of accountName
+                if(casens.get(i).getAccountname().equals("")){
+                    Date date = new Date();
+                    String strDate = formatter.format(date);
+                    logger.info("Account Name is mandatory");
+                //    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('null', 400, 'Account Name is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
+                    return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Account Name is mandatory");
+                }
+
+                //Validation's of email format
+                if(casens.get(i).getCcEmail().contains(",") || casens.get(i).getToEmail().contains(",")){
+                    Date date = new Date();
+                    String strDate = formatter.format(date);
+                    logger.info("Invalid email format");
+                 //   connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'Invalid email format', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
+                    return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Invalid email format");
+                }else if(casens.get(i).getToEmail().equals("")){
+                    Date date = new Date();
+                    String strDate = formatter.format(date);
+                    logger.info("Email is mandatory");
+                 //   connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'Email is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
+                    return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Email is mandatory");
+                }
+
+                //Validation's of toEmail
+                String toEmail = casens.get(i).getToEmail();
+                String[] toEmailSplit = toEmail.split(";");
+                for(int t = 0; t < toEmailSplit.length; t++){
+                    if(!(regexConfig.validateEmail(toEmailSplit[t]))){
+                        Date date = new Date();
+                        String strDate = formatter.format(date);
+                        logger.info("To List is invalid");
+                     //   connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'To List is invalid', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
+                        return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"To List is invalid");
+                    }
+                }
+
+                //Validation's of ccEmail
+//                String ccEmail = casens.get(i).getCcEmail();
+//                String[] ccEmailSplit = ccEmail.split(";");
+//                for(int c = 0; c < ccEmailSplit.length; c++){
+//                    if(!(regexConfig.validateEmail(ccEmailSplit[c]))){
+//                        Date date = new Date();
+//					      String strDate = formatter.format(date);
+//                        logger.info("Cc list is invalid");
+//                        connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'Cc List is invalid', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
+//                        return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Cc List is invalid");
+//                    }
+//                }
+
+                casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com;suvarna.jagadale@tatacommunications.com");
+                String to_Email  = casens.get(i).getToEmail();
+                String[] to_Email_Split = to_Email.split(";");
+                if(to_Email_Split.length==1){
+                    String encryptToEmail = encryptionConfig.encrypt(casens.get(i).getToEmail());
+                    casens.get(i).setToEmail(encryptToEmail);
+                }else{
+                    String s1="";
+                    for(int t = 0; t < to_Email_Split.length; t++){
+                        String encryptToEmail = encryptionConfig.encrypt(to_Email_Split[t]);
+                        s1+=encryptToEmail+";";
+                    }
+                    StringBuffer sb= new StringBuffer(s1);
+                    sb.deleteCharAt(sb.length()-1);
+                    casens.get(i).setToEmail(sb.toString());
+                }
+
+            }
+            Map<String, List<CasenClass>> collect = casens.stream().collect(Collectors.groupingBy(CasenClass::getAccountname,Collectors.mapping(Function.identity(),Collectors.collectingAndThen(Collectors.toList(),e->e.stream().sorted(Comparator.comparing(CasenClass::getImpact).reversed()).collect(Collectors.toList())))));
+            Map<String, String> map = new HashMap<>();
+            List<Map<String, List<CasenClass>>> list = new ArrayList<>();
+            for (String key : collect.keySet()) {
+                map.put(key, key);
+            }
+            for (Map.Entry<String, List<CasenClass>> entry : collect.entrySet()) {
+                Map<String, List<CasenClass>> updatedMap = new HashMap<>();
+                if (entry.getKey().equals(map.get(entry.getKey()))) {
+                    updatedMap.put("AccDetails", entry.getValue());
+                    list.add(updatedMap);
+                } else {
+                    updatedMap.put(entry.getKey(), entry.getValue());
+                }
+            }
+            for (int i = 0; i < list.size(); i++) {
+                sendListSize+=list.get(i).get("AccDetails").size();
+                String requestJson = gson.toJson(list.get(i));
+
+                MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+
+                //Main request's headers
+                HttpHeaders requestHeaders = new HttpHeaders();
+                requestHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+                HttpHeaders requestHeadersJSON = new HttpHeaders();
+                requestHeadersJSON.setContentType(MediaType.APPLICATION_JSON);
+                body.set("AccDetails", requestJson);
+
+                //extract mediatype from file extension
+                HttpHeaders requestHeadersAttachment = new HttpHeaders();
+                requestHeadersAttachment.setContentType(MediaType.MULTIPART_MIXED);
+                body.set("file",file.getResource());
+
+                HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(body,requestHeaders);
+
+                response = restTemplate.postForObject(SummaryNotificationWithAttachmentBaseUrl, entity, String.class);
+            }
+            System.out.println("Original list size are : "+contacts.length);
+            System.out.println("=================");
+            System.out.println("Send list size are : "+sendListSize);
+            return SuccessResponse.successHandler(HttpStatus.OK, false, response, list);
         }catch (Exception ex){
+            System.out.println("Error---------"+ex.getMessage());
+            Date date = new Date();
+            String strDate = formatter.format(date);
+         //   connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('null', 400, '"+ex.getMessage()+"', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
             return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
         }
     }
+
+//    @GetMapping("fetchData/errorLogs")
+//    public ResponseEntity<?> findErrorLogs(){
+//        try{
+//           //connectingToDB.Execute("CREATE TABLE CN_LOG_ERROR(" + "AccountName VARCHAR(255), Status NUMERIC(3), Message VARCHAR(255), API_Name VARCHAR(255), Created_At VARCHAR(255))");
+//             //connectingToDB.Execute("DROP TABLE CN_LOG_ERROR");
+//            //connectingToDB.Execute("DELETE FROM CN_LOG_ERROR");
+//           List<Map<String,Object>> data = connectingToDB.QueryForList("select * from CN_LOG_ERROR");
+//            return SuccessResponse.successHandler(HttpStatus.OK, false, "Successfully operation performed", data);
+//        }catch (Exception ex){
+//            return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
+//        }
+//    }
 
 }
