@@ -1,9 +1,6 @@
 package com.centralizedNotificationEngine.summaryNotifications.controller;
 
-import com.centralizedNotificationEngine.summaryNotifications.config.ConnectingToDB;
-import com.centralizedNotificationEngine.summaryNotifications.config.Constant;
-import com.centralizedNotificationEngine.summaryNotifications.config.EncryptionConfig;
-import com.centralizedNotificationEngine.summaryNotifications.config.RegexConfig;
+import com.centralizedNotificationEngine.summaryNotifications.config.*;
 import com.centralizedNotificationEngine.summaryNotifications.entities.*;
 import com.centralizedNotificationEngine.summaryNotifications.payload.ErrorResponse;
 import com.centralizedNotificationEngine.summaryNotifications.payload.SuccessResponse;
@@ -13,6 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -23,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -66,7 +66,7 @@ public class MainController {
     TicketInfo ticketInfo = new TicketInfo();
     AdditionalInformation additionalInformation = new AdditionalInformation();
     RegexConfig regexConfig = new RegexConfig();
-//    ConnectingToDB connectingToDB = new ConnectingToDB();
+    ConnectingToDB connectingToDB = new ConnectingToDB();
     EncryptionConfig encryptionConfig = new EncryptionConfig();
     SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
@@ -164,7 +164,7 @@ public class MainController {
                     Date date = new Date();
                     String strDate = formatter.format(date);
                     logger.info("Account Name is mandatory");
-                  //  connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('null', 400, 'Account Name is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
+                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('null', 400, 'Account Name is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
                     return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Account Name is mandatory");
                 }
 
@@ -173,13 +173,13 @@ public class MainController {
                     Date date = new Date();
                     String strDate = formatter.format(date);
                     logger.info("Invalid email format");
-                  //  connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'Invalid email format', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
+                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'Invalid email format', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
                     return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Invalid email format");
                 }else if(casens.get(i).getToEmail().equals("")){
                     Date date = new Date();
                     String strDate = formatter.format(date);
                     logger.info("Email is mandatory");
-                 //   connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'Email is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
+                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'Email is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
                     return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Email is mandatory");
                 }
 
@@ -191,7 +191,7 @@ public class MainController {
                         Date date = new Date();
                         String strDate = formatter.format(date);
                         logger.info("To List is invalid");
-                     //   connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'To List is invalid', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
+                        connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'To List is invalid', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
                         return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"To List is invalid");
                     }
                 }
@@ -256,7 +256,7 @@ public class MainController {
             System.out.println("Error---------"+ex.getMessage());
             Date date = new Date();
             String strDate = formatter.format(date);
-          //  connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('null', 400, '"+ex.getMessage()+"', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
+            connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('null', 400, '"+ex.getMessage()+"', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
             return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
         }
     }
@@ -285,7 +285,7 @@ public class MainController {
                     Date date = new Date();
                     String strDate = formatter.format(date);
                     logger.info("Account Name is mandatory");
-                //    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('null', 400, 'Account Name is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
+                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('null', 400, 'Account Name is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
                     return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Account Name is mandatory");
                 }
 
@@ -294,13 +294,13 @@ public class MainController {
                     Date date = new Date();
                     String strDate = formatter.format(date);
                     logger.info("Invalid email format");
-                 //   connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'Invalid email format', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
+                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'Invalid email format', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
                     return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Invalid email format");
                 }else if(casens.get(i).getToEmail().equals("")){
                     Date date = new Date();
                     String strDate = formatter.format(date);
                     logger.info("Email is mandatory");
-                 //   connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'Email is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
+                    connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'Email is mandatory', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
                     return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"Email is mandatory");
                 }
 
@@ -312,7 +312,7 @@ public class MainController {
                         Date date = new Date();
                         String strDate = formatter.format(date);
                         logger.info("To List is invalid");
-                     //   connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'To List is invalid', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
+                        connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('"+casens.get(i).getAccountname()+"', 400, 'To List is invalid', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
                         return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,"To List is invalid");
                     }
                 }
@@ -367,24 +367,34 @@ public class MainController {
                 sendListSize+=list.get(i).get("AccDetails").size();
                 String requestJson = gson.toJson(list.get(i));
 
-                MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+                MultiValueMap<String,Object> multipartRequest = new LinkedMultiValueMap<>();
 
-                //Main request's headers
                 HttpHeaders requestHeaders = new HttpHeaders();
-                requestHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);
+                requestHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);//Main request's headers
+
+                HttpHeaders requestHeadersAttachment = new HttpHeaders();
+                requestHeadersAttachment.setContentType(MediaType.TEXT_PLAIN);// extract mediatype from file extension
+                HttpEntity<ByteArrayResource> attachmentPart;
+                ByteArrayResource fileAsResource = new ByteArrayResource(file.getBytes()){
+                    @Override
+                    public String getFilename(){
+                        return file.getOriginalFilename();
+                    }
+                };
+                attachmentPart = new HttpEntity<>(fileAsResource,requestHeadersAttachment);
+
+                multipartRequest.set("file",attachmentPart);
+
 
                 HttpHeaders requestHeadersJSON = new HttpHeaders();
                 requestHeadersJSON.setContentType(MediaType.APPLICATION_JSON);
-                body.set("AccDetails", requestJson);
+                HttpEntity<String> requestEntityJSON = new HttpEntity<>(requestJson, requestHeadersJSON);
 
-                //extract mediatype from file extension
-                HttpHeaders requestHeadersAttachment = new HttpHeaders();
-                requestHeadersAttachment.setContentType(MediaType.MULTIPART_MIXED);
-                body.set("file",file.getResource());
+                multipartRequest.set("AccDetails",requestEntityJSON);
 
-                HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(body,requestHeaders);
+                HttpEntity<MultiValueMap<String,Object>> requestEntity = new HttpEntity<>(multipartRequest,requestHeaders);//final request
 
-                response = restTemplate.postForObject(SummaryNotificationWithAttachmentBaseUrl, entity, String.class);
+                response = restTemplate.postForObject(SummaryNotificationWithAttachmentBaseUrl, requestEntity, String.class);
             }
             System.out.println("Original list size are : "+contacts.length);
             System.out.println("=================");
@@ -394,22 +404,22 @@ public class MainController {
             System.out.println("Error---------"+ex.getMessage());
             Date date = new Date();
             String strDate = formatter.format(date);
-         //   connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('null', 400, '"+ex.getMessage()+"', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
+            connectingToDB.Execute("insert into CN_LOG_ERROR (AccountName, Status, Message, API_Name, Created_At) values ('null', 400, '"+ex.getMessage()+"', '"+Constant.API_Name.SUMMARY_NOTIFICATION+"', '"+strDate+"')");
             return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
         }
     }
 
-//    @GetMapping("fetchData/errorLogs")
-//    public ResponseEntity<?> findErrorLogs(){
-//        try{
-//           //connectingToDB.Execute("CREATE TABLE CN_LOG_ERROR(" + "AccountName VARCHAR(255), Status NUMERIC(3), Message VARCHAR(255), API_Name VARCHAR(255), Created_At VARCHAR(255))");
-//             //connectingToDB.Execute("DROP TABLE CN_LOG_ERROR");
-//            //connectingToDB.Execute("DELETE FROM CN_LOG_ERROR");
-//           List<Map<String,Object>> data = connectingToDB.QueryForList("select * from CN_LOG_ERROR");
-//            return SuccessResponse.successHandler(HttpStatus.OK, false, "Successfully operation performed", data);
-//        }catch (Exception ex){
-//            return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
-//        }
-//    }
+    @GetMapping("fetchData/errorLogs")
+    public ResponseEntity<?> findErrorLogs(){
+        try{
+           //connectingToDB.Execute("CREATE TABLE CN_LOG_ERROR(" + "AccountName VARCHAR(255), Status NUMERIC(3), Message VARCHAR(255), API_Name VARCHAR(255), Created_At VARCHAR(255))");
+             //connectingToDB.Execute("DROP TABLE CN_LOG_ERROR");
+            //connectingToDB.Execute("DELETE FROM CN_LOG_ERROR");
+           List<Map<String,Object>> data = connectingToDB.QueryForList("select * from CN_LOG_ERROR");
+            return SuccessResponse.successHandler(HttpStatus.OK, false, "Successfully operation performed", data);
+        }catch (Exception ex){
+            return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
+        }
+    }
 
 }
