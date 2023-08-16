@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/data")
@@ -48,8 +49,11 @@ public class MainController {
     @Value("${http.basicauth.password}")
     private String password;
 
-    @Value("${http.notifier.api.url}")
-    private String RfTemplateBaseUrl;
+    @Value("${http.notifier.api.urlV1.1}")
+    private String RfTemplateBaseUrlV2;
+
+    @Value("${http.notifier.api.urlV1.0}")
+    private String RfTemplateBaseUrlV1;
 
     @Value("${http.notifier.summary.api.url}")
     private String SummaryNotificationbaseUrl;
@@ -70,11 +74,12 @@ public class MainController {
     EncryptionConfig encryptionConfig = new EncryptionConfig();
     SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
-
-    @Schedules({
-            @Scheduled(cron = "${cronjob.expression}"),
-    })
-    public ResponseEntity<?> sendRfTemplateNotificationV1() throws Exception {
+//
+//    @Schedules({
+//            @Scheduled(cron = "${cronjob.expression}"),
+//    })
+    @PostMapping("/v1.1/sendData/rfTemplate")
+    public ResponseEntity<?> sendRfTemplateNotificationV2() throws Exception {
         try{
             Gson gson = new Gson();
             String response = null;
@@ -83,7 +88,7 @@ public class MainController {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.add("Authorization", "Basic " + base64Creds);
 
-            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at from Casen where \"Account name\"='Axis Bank Limited'";
+            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at, product, a_end_site_address, latest_update from Casen where \"Account name\"='Axis Bank Limited'";
             Object[] contacts = jdbcTemplate.queryForList(sql).stream().toArray();
 
             notification.setOrder("str");
@@ -126,6 +131,7 @@ public class MainController {
                 }
             }
 
+            casens.stream().sorted(Comparator.comparing(CasenClass::getImpact).reversed()).collect(Collectors.toList());
             additionalInformation.setAccDetails(casens);
 
             contact.setWatchList("str@gmail.com");
@@ -134,7 +140,7 @@ public class MainController {
 
             String requestJson  = gson.toJson(hashMap);
             HttpEntity<String> entity = new HttpEntity<String>(requestJson,headers);
-            response = restTemplate.postForObject(RfTemplateBaseUrl, entity, String.class);
+            response = restTemplate.postForObject(RfTemplateBaseUrlV2, entity, String.class);
             return SuccessResponse.successHandler(HttpStatus.OK,false,response,hashMap);
         }catch (Exception ex){
             return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
@@ -142,16 +148,91 @@ public class MainController {
     }
 
 
-            @Schedules({
-            @Scheduled(cron = "${cronjob.expression}"),
-    })
+    //
+//    @Schedules({
+//            @Scheduled(cron = "${cronjob.expression}"),
+//    })
+    @PostMapping("/v1.0/sendData/rfTemplate")
+    public ResponseEntity<?> sendRfTemplateNotificationV1() throws Exception {
+        try{
+            Gson gson = new Gson();
+            String response = null;
+            String authStr =username+":"+password;
+            String base64Creds = Base64.getEncoder().encodeToString(authStr.getBytes());
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.add("Authorization", "Basic " + base64Creds);
+
+            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at, product, a_end_site_address, latest_update from Casen where \"Account name\"='Axis Bank Limited'";
+            Object[] contacts = jdbcTemplate.queryForList(sql).stream().toArray();
+
+            notification.setOrder("str");
+            notification.setType("Spring boot kafka integration with MS Teams Graph API");
+
+            eventName.setEventName("email body to send msg  Spring boot kafka integration with MS Teams Graph API");
+
+            Notes notes1 = new Notes("string","testingforAPI");
+            Notes notes2 = new Notes("string","testingforAPI");
+            notesArrayList.add(notes1);
+            notesArrayList.add(notes2);
+
+            hashMap.put("contact",contact);
+            hashMap.put("notification",notification);
+            hashMap.put("eventName",eventName);
+            hashMap.put("ticketInfo",ticketInfo);
+            hashMap.put("additionalInfo",additionalInformation);
+            hashMap.put("notes",notesArrayList);
+
+            List<CasenClass> casens = new ArrayList<>();
+            for(int i=0;i<contacts.length;i++){
+                String s = gson.toJson(contacts[i]);
+                CasenClass casen = gson.fromJson(s, CasenClass.class);
+                casens.add(casen);
+                casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com;suvarna.jagadale@tatacommunications.com");
+                String to_Email  = casens.get(i).getToEmail();
+                String[] to_Email_Split = to_Email.split(";");
+                if(to_Email_Split.length==1){
+                    String encryptToEmail = encryptionConfig.encrypt(casens.get(i).getToEmail());
+                    casens.get(i).setToEmail(encryptToEmail);
+                }else{
+                    String s1="";
+                    for(int t = 0; t < to_Email_Split.length; t++){
+                        String encryptToEmail = encryptionConfig.encrypt(to_Email_Split[t]);
+                        s1+=encryptToEmail+";";
+                    }
+                    StringBuffer sb= new StringBuffer(s1);
+                    sb.deleteCharAt(sb.length()-1);
+                    casens.get(i).setToEmail(sb.toString());
+                }
+            }
+
+            casens.stream().sorted(Comparator.comparing(CasenClass::getImpact).reversed()).collect(Collectors.toList());
+            additionalInformation.setAccDetails(casens);
+
+            contact.setWatchList("str@gmail.com");
+            contact.setTo(casens.get(0).getToEmail());
+            contact.setCc("");
+
+            String requestJson  = gson.toJson(hashMap);
+            HttpEntity<String> entity = new HttpEntity<String>(requestJson,headers);
+            response = restTemplate.postForObject(RfTemplateBaseUrlV1, entity, String.class);
+            return SuccessResponse.successHandler(HttpStatus.OK,false,response,hashMap);
+        }catch (Exception ex){
+            return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
+        }
+    }
+
+
+//            @Schedules({
+//            @Scheduled(cron = "${cronjob.expression}"),
+//    })
+    @PostMapping("/v1.0/sendData/summaryNotification")
     public ResponseEntity<?> sendSummaryNotificationV1() throws JSONException, SQLException, ClassNotFoundException {
         try {
             int sendListSize=0;
             String response = null;
             Gson gson = new Gson();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at from Casen where \"Account name\"='Axis Bank Limited'";
+            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at, product, a_end_site_address, latest_update from Casen where \"Account name\"='ICICI Bank Limited'";
             Object[] contacts = jdbcTemplate.queryForList(sql).toArray();
             List<CasenClass> casens = new ArrayList<>();
             for (int i = 0; i < contacts.length; i++) {
@@ -209,7 +290,7 @@ public class MainController {
 //                    }
 //                }
 
-                casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com;suvarna.jagadale@tatacommunications.com");
+                casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com;");
                 String to_Email  = casens.get(i).getToEmail();
                 String[] to_Email_Split = to_Email.split(";");
                 if(to_Email_Split.length==1){
@@ -272,7 +353,7 @@ public class MainController {
             int sendListSize=0;
             String response = null;
             Gson gson = new Gson();
-            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at from Casen where \"Account name\"='Axis Bank Limited'";
+            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at, product, a_end_site_address, latest_update from Casen where \"Account name\"='Axis Bank Limited'";
             Object[] contacts = jdbcTemplate.queryForList(sql).toArray();
             List<CasenClass> casens = new ArrayList<>();
             for (int i = 0; i < contacts.length; i++) {
@@ -330,7 +411,7 @@ public class MainController {
 //                    }
 //                }
 
-                casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com;suvarna.jagadale@tatacommunications.com");
+                casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com");
                 String to_Email  = casens.get(i).getToEmail();
                 String[] to_Email_Split = to_Email.split(";");
                 if(to_Email_Split.length==1){
@@ -412,11 +493,13 @@ public class MainController {
     @GetMapping("fetchData/errorLogs")
     public ResponseEntity<?> findErrorLogs(){
         try{
+            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at, product, a_end_site_address, latest_update from Casen where \"Account name\"='Bajaj Finance Limited'";
+            Object[] contacts = jdbcTemplate.queryForList(sql).toArray();
            //connectingToDB.Execute("CREATE TABLE CN_LOG_ERROR(" + "AccountName VARCHAR(255), Status NUMERIC(3), Message VARCHAR(255), API_Name VARCHAR(255), Created_At VARCHAR(255))");
              //connectingToDB.Execute("DROP TABLE CN_LOG_ERROR");
             //connectingToDB.Execute("DELETE FROM CN_LOG_ERROR");
-           List<Map<String,Object>> data = connectingToDB.QueryForList("select * from CN_LOG_ERROR");
-            return SuccessResponse.successHandler(HttpStatus.OK, false, "Successfully operation performed", data);
+         //  List<Map<String,Object>> data = connectingToDB.QueryForList("select * from CN_LOG_ERROR");
+            return SuccessResponse.successHandler(HttpStatus.OK, false, "Successfully operation performed", contacts);
         }catch (Exception ex){
             return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
         }

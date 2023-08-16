@@ -1,6 +1,6 @@
-# Created at 2023-07-17T17:06:08.463
+# Created at 2023-08-16T12:40:37.311
 System.exit() or native command error interrupted process checker.
-java.lang.IllegalStateException: error [STOPPED] to read process 6784
+java.lang.IllegalStateException: error [STOPPED] to read process 18788
 	at org.apache.maven.surefire.booter.PpidChecker.checkProcessInfo(PpidChecker.java:145)
 	at org.apache.maven.surefire.booter.PpidChecker.isProcessAlive(PpidChecker.java:116)
 	at org.apache.maven.surefire.booter.ForkedBooter$2.run(ForkedBooter.java:214)
