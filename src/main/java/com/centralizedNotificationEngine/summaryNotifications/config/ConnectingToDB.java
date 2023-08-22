@@ -9,10 +9,10 @@ import java.util.Map;
 public class ConnectingToDB {
 
     public void Execute(String sqlStr) throws SQLException {
-       Connection developmentConnection = DriverManager.getConnection("jdbc:mysql://10.133.208.200:3306/flt","flt","flt123");
-       // Connection uatConnection = DriverManager.getConnection("jdbc:mysql://10.133.232.146:3307/test","suvarnaj","suvarna123");
+      // Connection developmentConnection = DriverManager.getConnection("jdbc:mysql://10.133.208.200:3306/flt","flt","flt123");
+       Connection uatConnection = DriverManager.getConnection("jdbc:mysql://10.133.232.146:3307/test","suvarnaj","suvarna123");
         // Connection productionConnection = DriverManager.getConnection("jdbc:mysql://10.150.10.9:3306/CNS","suvarnaj_prod","suvarna123");
-        Statement statement = developmentConnection.createStatement();
+        Statement statement = uatConnection.createStatement();
         statement.execute(sqlStr);
     }
 
@@ -25,10 +25,10 @@ public class ConnectingToDB {
     }
 
     public List<Map<String, Object>> QueryForList(String sqlStr) throws SQLException {
-       Connection developmentConnection = DriverManager.getConnection("jdbc:mysql://10.133.208.200:3306/flt","flt","flt123");
-       // Connection uatConnection = DriverManager.getConnection("jdbc:mysql://10.133.232.146:3307/test","suvarnaj","suvarna123");
+     //  Connection developmentConnection = DriverManager.getConnection("jdbc:mysql://10.133.208.200:3306/flt","flt","flt123");
+       Connection uatConnection = DriverManager.getConnection("jdbc:mysql://10.133.232.146:3307/test","suvarnaj","suvarna123");
         // Connection productionConnection = DriverManager.getConnection("jdbc:mysql://10.150.10.9:3306/CNS","suvarnaj_prod","suvarna123");
-        Statement statement = developmentConnection.createStatement();
+        Statement statement = uatConnection.createStatement();
         ResultSet resultSet = statement.executeQuery(sqlStr);
         List<Map<String,Object>> rows = new ArrayList<Map<String,Object>>();
         while (resultSet.next()) {

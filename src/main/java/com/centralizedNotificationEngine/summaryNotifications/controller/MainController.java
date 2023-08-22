@@ -187,9 +187,9 @@ public class MainController {
                 String s = gson.toJson(contacts[i]);
                 CasenClass casen = gson.fromJson(s, CasenClass.class);
                 casens.add(casen);
-                casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com;suvarna.jagadale@tatacommunications.com");
+                casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com,suvarna.jagadale@tatacommunications.com");
                 String to_Email  = casens.get(i).getToEmail();
-                String[] to_Email_Split = to_Email.split(";");
+                String[] to_Email_Split = to_Email.split(",");
                 if(to_Email_Split.length==1){
                     String encryptToEmail = encryptionConfig.encrypt(casens.get(i).getToEmail());
                     casens.get(i).setToEmail(encryptToEmail);
@@ -197,7 +197,7 @@ public class MainController {
                     String s1="";
                     for(int t = 0; t < to_Email_Split.length; t++){
                         String encryptToEmail = encryptionConfig.encrypt(to_Email_Split[t]);
-                        s1+=encryptToEmail+";";
+                        s1+=encryptToEmail+",";
                     }
                     StringBuffer sb= new StringBuffer(s1);
                     sb.deleteCharAt(sb.length()-1);
@@ -222,9 +222,9 @@ public class MainController {
     }
 
 
-//            @Schedules({
-//            @Scheduled(cron = "${cronjob.expression}"),
-//    })
+            @Schedules({
+            @Scheduled(cron = "${cronjob.expression}"),
+    })
     @PostMapping("/v1.0/sendData/summaryNotification")
     public ResponseEntity<?> sendSummaryNotificationV1() throws JSONException, SQLException, ClassNotFoundException {
         try {
