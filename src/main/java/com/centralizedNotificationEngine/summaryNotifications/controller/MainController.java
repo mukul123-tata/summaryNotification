@@ -168,12 +168,30 @@ public class MainController {
             notification.setOrder("str");
             notification.setType("Spring boot kafka integration with MS Teams Graph API");
 
-            eventName.setEventName("email body to send msg  Spring boot kafka integration with MS Teams Graph API");
+            eventName.setEventName("pe_closure_unsuccessful");
 
             Notes notes1 = new Notes("string","testingforAPI");
             Notes notes2 = new Notes("string","testingforAPI");
             notesArrayList.add(notes1);
             notesArrayList.add(notes2);
+
+            ticketInfo.setServiceId("001ASHB623035532335");
+            ticketInfo.setLocation("001ASHB623035532335");
+
+            additionalInformation.setTicketReferenceTCL("001ASHB623035532335");
+            additionalInformation.setNimsId("001ASHB623035532335");
+            additionalInformation.setMaintenanceType("001ASHB623035532335");
+            additionalInformation.setActivityStatus("001ASHB623035532335");
+            additionalInformation.setExecutionOwner("001ASHB623035532335");
+            additionalInformation.setActivityWindowIST("001ASHB623035532335");
+            additionalInformation.setActivityWindowGMT("001ASHB623035532335");
+            additionalInformation.setExpectedImpact("001ASHB623035532335");
+            additionalInformation.setActivityDescription("001ASHB623035532335");
+            additionalInformation.setExpectedImpactDuration_dd_hh_mm("001ASHB623035532335");
+            additionalInformation.setExtendedUpToTimeWindowIST("001ASHB623035532335");
+            additionalInformation.setExtendedUpToTimeWindowGMT("001ASHB623035532335");
+            additionalInformation.setRevisedActivityWindowIST("001ASHB623035532335");
+            additionalInformation.setRevisedActivityWindowGMT("001ASHB623035532335");
 
             hashMap.put("contact",contact);
             hashMap.put("notification",notification);
@@ -187,7 +205,7 @@ public class MainController {
                 String s = gson.toJson(contacts[i]);
                 CasenClass casen = gson.fromJson(s, CasenClass.class);
                 casens.add(casen);
-                casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com,suvarna.jagadale@tatacommunications.com");
+                casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com");
                 String to_Email  = casens.get(i).getToEmail();
                 String[] to_Email_Split = to_Email.split(",");
                 if(to_Email_Split.length==1){
@@ -205,9 +223,6 @@ public class MainController {
                 }
             }
 
-            casens.stream().sorted(Comparator.comparing(CasenClass::getImpact).reversed()).collect(Collectors.toList());
-            additionalInformation.setAccDetails(casens);
-
             contact.setWatchList("str@gmail.com");
             contact.setTo(casens.get(0).getToEmail());
             contact.setCc("");
@@ -222,9 +237,9 @@ public class MainController {
     }
 
 
-            @Schedules({
-            @Scheduled(cron = "${cronjob.expression}"),
-    })
+//            @Schedules({
+//            @Scheduled(cron = "${cronjob.expression}"),
+//    })
     @PostMapping("/v1.0/sendData/summaryNotification")
     public ResponseEntity<?> sendSummaryNotificationV1() throws JSONException, SQLException, ClassNotFoundException {
         try {
@@ -493,12 +508,13 @@ public class MainController {
     @GetMapping("fetchData/errorLogs")
     public ResponseEntity<?> findErrorLogs(){
         try{
-            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at, product, a_end_site_address, latest_update from Casen where \"Account name\"='Bajaj Finance Limited'";
+            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at, product, a_end_site_address, latest_update from Casen where \"Account name\"='ICICI Bank Limited'";
             Object[] contacts = jdbcTemplate.queryForList(sql).toArray();
            //connectingToDB.Execute("CREATE TABLE CN_LOG_ERROR(" + "AccountName VARCHAR(255), Status NUMERIC(3), Message VARCHAR(255), API_Name VARCHAR(255), Created_At VARCHAR(255))");
              //connectingToDB.Execute("DROP TABLE CN_LOG_ERROR");
             //connectingToDB.Execute("DELETE FROM CN_LOG_ERROR");
          //  List<Map<String,Object>> data = connectingToDB.QueryForList("select * from CN_LOG_ERROR");
+            System.out.println(contacts.length);
             return SuccessResponse.successHandler(HttpStatus.OK, false, "Successfully operation performed", contacts);
         }catch (Exception ex){
             return ErrorResponse.errorHandler(HttpStatus.BAD_REQUEST,true,ex.getMessage());
