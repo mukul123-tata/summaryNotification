@@ -247,7 +247,7 @@ public class MainController {
             String response = null;
             Gson gson = new Gson();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at, product, a_end_site_address, latest_update from Casen where \"Account name\"='ICICI Bank Limited'";
+            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at, product, a_end_site_address, latest_update from Casen where \"Account name\"='Axis Bank Limited'";
             Object[] contacts = jdbcTemplate.queryForList(sql).toArray();
             List<CasenClass> casens = new ArrayList<>();
             for (int i = 0; i < contacts.length; i++) {
@@ -508,7 +508,7 @@ public class MainController {
     @GetMapping("fetchData/errorLogs")
     public ResponseEntity<?> findErrorLogs(){
         try{
-            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at, product, a_end_site_address, latest_update from Casen where \"Account name\"='ICICI Bank Limited'";
+            String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at, product, a_end_site_address, latest_update from Casen where \"Account name\"='Axis Bank Limited'";
             Object[] contacts = jdbcTemplate.queryForList(sql).toArray();
            //connectingToDB.Execute("CREATE TABLE CN_LOG_ERROR(" + "AccountName VARCHAR(255), Status NUMERIC(3), Message VARCHAR(255), API_Name VARCHAR(255), Created_At VARCHAR(255))");
              //connectingToDB.Execute("DROP TABLE CN_LOG_ERROR");
