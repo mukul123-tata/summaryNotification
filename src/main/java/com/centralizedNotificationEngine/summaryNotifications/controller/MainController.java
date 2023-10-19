@@ -327,7 +327,7 @@ public class MainController {
 //                    }
 //                }
 
-                    casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com;suvarna.jagadale@tatacommunications.com");
+             //       casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com;suvarna.jagadale@tatacommunications.com");
                     String to_Email = casens.get(i).getToEmail();
                     String[] to_Email_Split = to_Email.split(";");
                     if (to_Email_Split.length == 1) {
