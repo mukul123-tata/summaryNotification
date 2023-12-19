@@ -266,6 +266,26 @@ public class MainController {
             accountLists.add("ICICI Bank Limited");
             accountLists.add("ICICI Bank Limited Singapore Branch");
             accountLists.add("ICICI Bank Ltd");
+
+            accountLists.add("Bank Of Baroda");
+            accountLists.add("DBS BANK LTD");
+            accountLists.add("HDFC LIFE INSURANCE COMPANY LIMITED");
+            accountLists.add("HDFC SECURITIES LTD");
+            accountLists.add("Housing Development Finance Corporation Limited");
+            accountLists.add("PRATHAMA U.P. GRAMIN BANK");
+            accountLists.add("Punjab Gramin Bank");
+            accountLists.add("PUNJAB NATIONAL BANK");
+            accountLists.add("Punjab National Bank-erstwhile OBC");
+            accountLists.add("Punjab National Bank-erstwhile UBI");
+            accountLists.add("Starbucks");
+            accountLists.add("The Federal Bank Limited");
+            accountLists.add("The South Indian Bank Limited");
+            accountLists.add("Trent Ltd");
+            accountLists.add("UNION BANK OF INDIA");
+            accountLists.add("UNION BANK OF INDIA- erstwhile AB");
+            accountLists.add("UNION BANK OF INDIA- erstwhile CB");
+            accountLists.add("UNION BANK OF INDIA_erstwhile AB");
+            accountLists.add("Jubilant Foodworks Limited");
             for(int m = 0;m<accountLists.size();m++) {
 
                 String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at, product, a_end_site_address, latest_update from Casen where \"Account name\"='"+accountLists.get(m)+"'";
@@ -327,7 +347,7 @@ public class MainController {
 //                    }
 //                }
 
-               //     casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com;suvarna.jagadale@tatacommunications.com");
+                    casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com;suvarna.jagadale@tatacommunications.com");
                     String to_Email = casens.get(i).getToEmail();
                     String[] to_Email_Split = to_Email.split(";");
                     if (to_Email_Split.length == 1) {
