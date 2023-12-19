@@ -238,10 +238,10 @@ public class MainController {
     }
 
 
-//                @Schedules({
-//            @Scheduled(cron = "${cronjob.expression}"),
-//    })
-    @PostMapping("/v1.0/sendData/summaryNotification")
+                @Schedules({
+            @Scheduled(cron = "${cronjob.expression}"),
+    })
+//    @PostMapping("/v1.0/sendData/summaryNotification")
     public ResponseEntity<?> sendSummaryNotificationV1() throws JSONException, SQLException, ClassNotFoundException {
         try {
             int sendListSize=0;
