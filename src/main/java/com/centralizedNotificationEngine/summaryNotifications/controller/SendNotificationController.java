@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.annotation.Schedules;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
@@ -46,10 +48,10 @@ public class SendNotificationController {
     SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
     Date date = new Date();
 
-//    @Schedules({
-//            @Scheduled(cron = "${cronjob.expression}"),
-//    })
-    @PostMapping("/sendData/summaryNotification")
+
+    @Schedules({
+            @Scheduled(cron = "${cronjob.expression}"),
+    })
     public ResponseEntity<?> sendSummaryNotification() throws JSONException, SQLException, ClassNotFoundException {
         try {
             logger.info("Starting Scheduler..");
