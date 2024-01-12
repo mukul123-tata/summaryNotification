@@ -48,7 +48,6 @@ public class SendNotificationController {
     SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
     Date date = new Date();
 
-
     @Schedules({
             @Scheduled(cron = "${cronjob.expression}"),
     })
@@ -58,52 +57,52 @@ public class SendNotificationController {
             String response = null;
             Gson gson  = new Gson();
 
-            List<String> accountLists = new ArrayList<String>();
-            accountLists.add("EXL SERVICE.COM (I) PVT LTD");
-            accountLists.add("EXL Service.com (India) Private Limited");
-            accountLists.add("EXL SERVICE.COM INDIA PVT LTD");
-            accountLists.add("EXL SERVICE.COM LLC");
-            accountLists.add("EXL SERVICE.COM(INDIA) PVT LTD");
-            accountLists.add("HCL Technologies Limited");
-            accountLists.add("HCL TECHNOLOGIES LIMITED, SWISS BRANCH");
-            accountLists.add("Axis Bank Limited");
-            accountLists.add("Axis Bank Ltd");
-            accountLists.add("Axis Bank UK Limited");
-            accountLists.add("Bajaj Finance Limited");
-            accountLists.add("Bajaj Finance Ltd");
-            accountLists.add("HDFC Bank Limited");
-            accountLists.add("HDFC BANK LTD");
-            accountLists.add("ICICI Bank Limited");
-            accountLists.add("ICICI Bank Limited Singapore Branch");
-            accountLists.add("ICICI Bank Ltd");
+//            List<String> accountLists = new ArrayList<String>();
+//            accountLists.add("EXL SERVICE.COM (I) PVT LTD");
+//            accountLists.add("EXL Service.com (India) Private Limited");
+//            accountLists.add("EXL SERVICE.COM INDIA PVT LTD");
+//            accountLists.add("EXL SERVICE.COM LLC");
+//            accountLists.add("EXL SERVICE.COM(INDIA) PVT LTD");
+//            accountLists.add("HCL Technologies Limited");
+//            accountLists.add("HCL TECHNOLOGIES LIMITED, SWISS BRANCH");
+//            accountLists.add("Axis Bank Limited");
+//            accountLists.add("Axis Bank Ltd");
+//            accountLists.add("Axis Bank UK Limited");
+//            accountLists.add("Bajaj Finance Limited");
+//            accountLists.add("Bajaj Finance Ltd");
+//            accountLists.add("HDFC Bank Limited");
+//            accountLists.add("HDFC BANK LTD");
+//            accountLists.add("ICICI Bank Limited");
+//            accountLists.add("ICICI Bank Limited Singapore Branch");
+//            accountLists.add("ICICI Bank Ltd");
+//
+//            accountLists.add("Bank Of Baroda");
+//            accountLists.add("DBS BANK LTD");
+//            accountLists.add("HDFC LIFE INSURANCE COMPANY LIMITED");
+//            accountLists.add("HDFC SECURITIES LTD");
+//            accountLists.add("Housing Development Finance Corporation Limited");
+//            accountLists.add("PRATHAMA U.P. GRAMIN BANK");
+//            accountLists.add("Punjab Gramin Bank");
+//            accountLists.add("PUNJAB NATIONAL BANK");
+//            accountLists.add("Punjab National Bank-erstwhile OBC");
+//            accountLists.add("Punjab National Bank-erstwhile UBI");
+//            accountLists.add("Starbucks");
+//            accountLists.add("The Federal Bank Limited");
+//            accountLists.add("The South Indian Bank Limited");
+//            accountLists.add("Trent Ltd");
+//            accountLists.add("UNION BANK OF INDIA");
+//            accountLists.add("UNION BANK OF INDIA- erstwhile AB");
+//            accountLists.add("UNION BANK OF INDIA- erstwhile CB");
+//            accountLists.add("UNION BANK OF INDIA_erstwhile AB");
+//            accountLists.add("Jubilant Foodworks Limited");
 
-            accountLists.add("Bank Of Baroda");
-            accountLists.add("DBS BANK LTD");
-            accountLists.add("HDFC LIFE INSURANCE COMPANY LIMITED");
-            accountLists.add("HDFC SECURITIES LTD");
-            accountLists.add("Housing Development Finance Corporation Limited");
-            accountLists.add("PRATHAMA U.P. GRAMIN BANK");
-            accountLists.add("Punjab Gramin Bank");
-            accountLists.add("PUNJAB NATIONAL BANK");
-            accountLists.add("Punjab National Bank-erstwhile OBC");
-            accountLists.add("Punjab National Bank-erstwhile UBI");
-            accountLists.add("Starbucks");
-            accountLists.add("The Federal Bank Limited");
-            accountLists.add("The South Indian Bank Limited");
-            accountLists.add("Trent Ltd");
-            accountLists.add("UNION BANK OF INDIA");
-            accountLists.add("UNION BANK OF INDIA- erstwhile AB");
-            accountLists.add("UNION BANK OF INDIA- erstwhile CB");
-            accountLists.add("UNION BANK OF INDIA_erstwhile AB");
-            accountLists.add("Jubilant Foodworks Limited");
+//            for(int m = 0;m<accountLists.size();m++) {
 
-            for(int m = 0;m<accountLists.size();m++) {
-
-                String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at, product, a_end_site_address, latest_update from Casen where \"Account name\"='"+accountLists.get(m)+"'";
+                String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at, product, a_end_site_address, latest_update from Casen";
                 Object[] contacts = jdbcTemplate.queryForList(sql).toArray();
 
                 if(contacts.length==0) {
-                    logger.info("There is no data in the db for this particular account === {}",accountLists.get(m));
+                    logger.info("There is no data in the db.");
                 } else {
 
                     List<CasenClass> casens = new ArrayList<>();
@@ -134,9 +133,10 @@ public class SendNotificationController {
                         }
 
                         //Validation's of toEmail
-                        String toEmail = casens.get(i).getToEmail();
+                        String toEmail = casens.get(i).getToEmail().replaceAll(";;",",");
                         String[] toEmailSplit = toEmail.split(";");
                         for (int t = 0; t < toEmailSplit.length; t++) {
+                            logger.info("toEmailSplit++{}",toEmailSplit[t]);
                             if (!(regexConfig.validateEmail(toEmailSplit[t]))) {
                                 String strDate = formatter.format(date);
                                 logger.info("To List is invalid.");
@@ -158,9 +158,9 @@ public class SendNotificationController {
 //                }
 
                         // Comment these snippet if production is readiness
-                    //    casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com");
+                        casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com");
 
-                        String to_Email = casens.get(i).getToEmail();
+                        String to_Email = casens.get(i).getToEmail().replaceAll(";;",",");
                         String[] to_Email_Split = to_Email.split(";");
                         if (to_Email_Split.length == 1) {
                             String encryptToEmail = encryptionConfig.encrypt(casens.get(i).getToEmail());
@@ -198,9 +198,9 @@ public class SendNotificationController {
                         HttpEntity<String> entity = new HttpEntity<String>(requestJson, headers);
                         response = restTemplate.postForObject(SummaryNotificationbaseUrl, entity, String.class);
                     }
-                    logger.info("Data found for "+accountLists.get(m)+" and send to notification.");
+                    logger.info("Data send to notification.");
                 }
-            }
+      //      }
             logger.info("Scheduler Completed Successfully..");
             return SuccessResponse.successHandler(HttpStatus.OK, false, response, null);
         }catch (Exception ex){
