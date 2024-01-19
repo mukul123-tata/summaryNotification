@@ -96,9 +96,10 @@ public class SendNotificationController {
 //            accountLists.add("UNION BANK OF INDIA_erstwhile AB");
 //            accountLists.add("Jubilant Foodworks Limited");
 
-//            for(int m = 0;m<accountLists.size();m++) {
+       //      for(int m = 0;m<accountLists.size();m++) {
 
                 String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at, product, a_end_site_address, latest_update from Casen";
+               //  String sql = "select \"Ticket Number\" TicketNumber, \"Service ID\" ServiceID, \"Account name\" Accountname, bandwidth, impact, state, \"Status Reason\" StatusReason, to_email, cc_email, \"opened_at\" opened_at, product, a_end_site_address, latest_update from Casen where \"Account name\"='"+accountLists.get(m)+"'";
                 Object[] contacts = jdbcTemplate.queryForList(sql).toArray();
 
                 if(contacts.length==0) {
@@ -158,7 +159,7 @@ public class SendNotificationController {
 //                }
 
                         // Comment these snippet if production is readiness
-                        casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com");
+                   //     casens.get(i).setToEmail("MUKUL.SHARMA1@contractor.tatacommunications.com");
 
                         String to_Email = casens.get(i).getToEmail().replaceAll(";;",",");
                         String[] to_Email_Split = to_Email.split(";");
@@ -200,7 +201,7 @@ public class SendNotificationController {
                     }
                     logger.info("Data send to notification.");
                 }
-      //      }
+         //   }
             logger.info("Scheduler Completed Successfully..");
             return SuccessResponse.successHandler(HttpStatus.OK, false, response, null);
         }catch (Exception ex){
